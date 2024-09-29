@@ -37,8 +37,8 @@ def main():
                 datetime.fromisoformat(price["date_time"]), "%A %d %B at %H:%M"
             )
             send(
-                title="🐙 Octopus Agile: Potential cheap rate coming up",
-                message=f"{formatted_date}: Between {price['agile_pred']}p and {price['agile_low']}p",
+                title="🐙 Octopus Agile: Cheap rate coming up",
+                message=f"{formatted_date}.\nBetween {price['agile_pred']}p and {price['agile_low']}p.",
             )
             break
 
