@@ -27,7 +27,8 @@ $ source venv/bin/activate
 Open the settings.py and enter:
 - Your [Distribution Network Operator Code](https://en.wikipedia.org/wiki/Distribution_network_operator)
 - Your preferred price threshold in pence
-- The Apprise services you want to notify
+- The Apprise services you want to notify - see the [Apprise README](https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications)
+for the format of the service you want to add.
 
 Then run the application
 ```
