@@ -26,21 +26,107 @@ def main():
     request_url = f"https://agilepredict.com/api/{settings.region_code}"
     predictions = requests.get(request_url).json()
     prices = predictions[0]["prices"]
+    cheap_prices = []
+    cheap_period_started = False
+    cheapest_price = 0
 
     for price in prices:
-        if (
-            price["agile_pred"] < settings.price_low_threshold
-            or price["agile_low"] < settings.price_low_threshold
-        ):
-            # Cheap period found - send a notification and break out
-            formatted_date = datetime.strftime(
-                datetime.fromisoformat(price["date_time"]), "%A %d %B at %H:%M"
-            )
-            send(
-                title="🐙 Octopus Agile: Cheap rate coming up",
-                message=f"{formatted_date}.\nBetween {price['agile_pred']}p and {price['agile_low']}p.",
-            )
-            break
+        if cheap_period_started == False:
+            if (
+                price["agile_pred"] < settings.price_low_threshold
+                and price["agile_low"] < settings.price_low_threshold
+            ):
+                print(
+                    f"Cheap start: {price['date_time']}: Price: {price['agile_pred']}p / {price['agile_low']}p"
+                )
+                cheap_period_started = True
+                cheapest_price = price["agile_low"]
+
+                try:
+                    formatted_start_date = datetime.strftime(
+                        datetime.fromisoformat(price["date_time"]), "%A %d %B"
+                    )
+                    formatted_start_time = datetime.strftime(
+                        datetime.fromisoformat(price["date_time"]), "%H:%M"
+                    )
+                except ValueError:
+                    # print("Correcting datetime format")
+                    corrected_datetime_format = datetime.strptime(
+                        price["date_time"], "%Y-%m-%dT%H:%M:%SZ"
+                    )
+                    formatted_start_date = datetime.strftime(
+                        corrected_datetime_format, "%A %d %B"
+                    )
+                    formatted_start_time = datetime.strftime(
+                        corrected_datetime_format, "%H:%M"
+                    )
+
+        elif cheap_period_started == True:
+            # Update the cheapest price of this current cheap period
+            if price["agile_low"] < cheapest_price:
+                cheapest_price = price["agile_low"]
+
+            if (
+                price["agile_pred"] > settings.price_low_threshold
+                and price["agile_low"] > settings.price_low_threshold
+            ):
+                # Cheap period has finished
+                print(
+                    f"Cheap end: {price['date_time']}: Price: {price['agile_pred']}p / {price['agile_low']}p\n"
+                )
+                cheap_period_started = False
+
+                # For some reason, not all times include the timezone
+                try:
+                    formatted_end_date = datetime.strftime(
+                        datetime.fromisoformat(price["date_time"]), "%A %d %B"
+                    )
+                    formatted_end_time = datetime.strftime(
+                        datetime.fromisoformat(price["date_time"]), "%H:%M"
+                    )
+                except ValueError:
+                    # print("Correcting datetime format")
+                    corrected_datetime_format = datetime.strptime(
+                        price["date_time"], "%Y-%m-%dT%H:%M:%SZ"
+                    )
+                    formatted_end_date = datetime.strftime(
+                        corrected_datetime_format, "%A %d %B"
+                    )
+                    formatted_end_time = datetime.strftime(
+                        corrected_datetime_format, "%H:%M"
+                    )
+
+                # We've got a start and period for the cheap rate - add to the
+                # cheap prices list
+                if cheapest_price < 0:
+                    cheapest_price = f"{cheapest_price}p/kWh ⭐"
+                else:
+                    cheapest_price = f"{cheapest_price}p/kWh"
+
+                cheap_prices.append(
+                    {
+                        "start_date": formatted_start_date,
+                        "start_time": formatted_start_time,
+                        "end_date": formatted_end_date,
+                        "end_time": formatted_end_time,
+                        "price": cheapest_price,
+                    }
+                )
+
+    formatted_message = ""
+    for cheap_price in cheap_prices:
+        # formatted_message += f"Start: {cheap_price['start']}\nEnd:{cheap_price['end']}\nCheapest price: {cheap_price['price']}\n\n"
+        formatted_message += (
+            f"*{cheap_price['start_date']}*\n"
+            f"{cheap_price['start_time']} to {cheap_price['end_time']}\n"
+            f"Lowest price: {cheap_price['price']}\n\n"
+        )
+    print(formatted_message)
+
+    send(
+        title="🐙 Octopus Agile: Upcoming cheap rates",
+        message=formatted_message,
+    )
 
 
 if __name__ == "__main__":
