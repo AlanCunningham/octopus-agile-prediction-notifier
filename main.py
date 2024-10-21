@@ -44,7 +44,7 @@ def main():
 
                 try:
                     formatted_start_date = datetime.strftime(
-                        datetime.fromisoformat(price["date_time"]), "%A %d %B"
+                        datetime.fromisoformat(price["date_time"]), "%A %-d %B"
                     )
                     formatted_start_time = datetime.strftime(
                         datetime.fromisoformat(price["date_time"]), "%H:%M"
@@ -55,7 +55,7 @@ def main():
                         price["date_time"], "%Y-%m-%dT%H:%M:%SZ"
                     )
                     formatted_start_date = datetime.strftime(
-                        corrected_datetime_format, "%A %d %B"
+                        corrected_datetime_format, "%A %-d %B"
                     )
                     formatted_start_time = datetime.strftime(
                         corrected_datetime_format, "%H:%M"
@@ -79,7 +79,7 @@ def main():
                 # For some reason, not all times include the timezone
                 try:
                     formatted_end_date = datetime.strftime(
-                        datetime.fromisoformat(price["date_time"]), "%A %d %B"
+                        datetime.fromisoformat(price["date_time"]), "%A %-d %B"
                     )
                     formatted_end_time = datetime.strftime(
                         datetime.fromisoformat(price["date_time"]), "%H:%M"
@@ -90,7 +90,7 @@ def main():
                         price["date_time"], "%Y-%m-%dT%H:%M:%SZ"
                     )
                     formatted_end_date = datetime.strftime(
-                        corrected_datetime_format, "%A %d %B"
+                        corrected_datetime_format, "%A %-d %B"
                     )
                     formatted_end_time = datetime.strftime(
                         corrected_datetime_format, "%H:%M"
@@ -103,9 +103,20 @@ def main():
                 else:
                     cheapest_price = f"{cheapest_price}p/kWh"
 
+                # A rather hacky way of adding the suffix to the date (now that we have it)
+                split_date = formatted_start_date.split()
+                if 4 <= int(split_date[1]) <= 20 or 24 <= int(split_date[1]) <= 30:
+                    suffix = "th"
+                else:
+                    suffix = ["st", "nd", "rd"][int(split_date[1]) % 10 - 1]
+
+                start_date_with_suffix = (
+                    f"{split_date[0]} {split_date[1]}{suffix} {split_date[2]}"
+                )
+
                 cheap_prices.append(
                     {
-                        "start_date": formatted_start_date,
+                        "start_date": start_date_with_suffix,
                         "start_time": formatted_start_time,
                         "end_date": formatted_end_date,
                         "end_time": formatted_end_time,
