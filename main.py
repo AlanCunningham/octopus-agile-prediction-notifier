@@ -30,14 +30,20 @@ def main():
     cheap_period_started = False
     cheapest_price = 0
 
+    # Sometimes the highest prediction can be vastle different to the
+    # default and lowest prediction. We'll accept high predictions as long as
+    # they're not this many pence above the price_low_threshold.
+    high_prediction_acceptance_excess = settings.price_low_threshold + 5
+
     for price in prices:
         if cheap_period_started == False:
             if (
-                price["agile_pred"] < settings.price_low_threshold
-                and price["agile_low"] < settings.price_low_threshold
+                price["agile_pred"] <= settings.price_low_threshold
+                and price["agile_low"] <= settings.price_low_threshold
+                and price["agile_high"] <= high_prediction_acceptance_excess
             ):
                 print(
-                    f"Cheap start: {price['date_time']}: Price: {price['agile_pred']}p / {price['agile_low']}p"
+                    f"Cheap start: {price['date_time']}: Predicted: {price['agile_pred']}p / Low: {price['agile_low']}p / High: {price['agile_high']}p"
                 )
                 cheap_period_started = True
                 cheapest_price = price["agile_low"]
@@ -67,12 +73,13 @@ def main():
                 cheapest_price = price["agile_low"]
 
             if (
-                price["agile_pred"] > settings.price_low_threshold
-                and price["agile_low"] > settings.price_low_threshold
+                price["agile_pred"] >= settings.price_low_threshold
+                and price["agile_low"] >= settings.price_low_threshold
+                and price["agile_high"] >= high_prediction_acceptance_excess
             ):
                 # Cheap period has finished
                 print(
-                    f"Cheap end: {price['date_time']}: Price: {price['agile_pred']}p / {price['agile_low']}p\n"
+                    f"Cheap end: {price['date_time']}: Price: {price['agile_pred']}p / {price['agile_low']}p / High: {price['agile_high']}p\n"
                 )
                 cheap_period_started = False
 
@@ -124,19 +131,22 @@ def main():
                     }
                 )
 
-    formatted_message = ""
+    notification_message = ""
+    if not cheap_prices:
+        # No cheap prices predicted
+        notification_message = "No upcoming cheap periods predicted."
     for cheap_price in cheap_prices:
         # formatted_message += f"Start: {cheap_price['start']}\nEnd:{cheap_price['end']}\nCheapest price: {cheap_price['price']}\n\n"
-        formatted_message += (
+        notification_message += (
             f"*{cheap_price['start_date']}*\n"
             f"{cheap_price['start_time']} to {cheap_price['end_time']}\n"
             f"Lowest price: {cheap_price['price']}\n\n"
         )
-    print(formatted_message)
+    print(notification_message)
 
     send(
         title="🐙 Octopus Agile: Upcoming cheap rates",
-        message=formatted_message,
+        message=notification_message,
     )
 
 
