@@ -131,23 +131,21 @@ def main():
                     }
                 )
 
-    notification_message = ""
-    if not cheap_prices:
-        # No cheap prices predicted
-        notification_message = "No upcoming cheap periods predicted."
-    for cheap_price in cheap_prices:
-        # formatted_message += f"Start: {cheap_price['start']}\nEnd:{cheap_price['end']}\nCheapest price: {cheap_price['price']}\n\n"
-        notification_message += (
-            f"*{cheap_price['start_date']}*\n"
-            f"{cheap_price['start_time']} to {cheap_price['end_time']}\n"
-            f"Lowest price: {cheap_price['price']}\n\n"
-        )
-    print(notification_message)
+    if cheap_prices:
+        notification_message = ""
+        for cheap_price in cheap_prices:
+            # formatted_message += f"Start: {cheap_price['start']}\nEnd:{cheap_price['end']}\nCheapest price: {cheap_price['price']}\n\n"
+            notification_message += (
+                f"*{cheap_price['start_date']}*\n"
+                f"{cheap_price['start_time']} to {cheap_price['end_time']}\n"
+                f"Lowest price: {cheap_price['price']}\n\n"
+            )
+        print(notification_message)
 
-    send(
-        title="🐙 Octopus Agile: Upcoming cheap rates",
-        message=notification_message,
-    )
+        send(
+            title="🐙 Octopus Agile: Upcoming cheap rates",
+            message=notification_message,
+        )
 
 
 if __name__ == "__main__":
